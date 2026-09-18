@@ -54,6 +54,14 @@ beforepush --target develop
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and contribution guidelines.
 
+## Contributors
+
+Thanks to everyone who contributes to BeforePush!  ❤️
+
+<a href="https://github.com/alibro005/beforepush/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=alibro005/beforepush" />
+</a>
+
 ## Scope
 
 BeforePush focuses on local Git branch readiness.
