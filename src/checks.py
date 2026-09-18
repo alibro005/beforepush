@@ -147,8 +147,20 @@ def check_target_branch(target: str) -> CheckResult:
 
 def run_checks(target: str) -> list[CheckResult]:
     """Run all repository readiness checks."""
+    repository = check_git_repository()
+    if repository.status == CheckStatus.PASS and not git.branch_exists("HEAD"):
+        return [
+            repository,
+            CheckResult(
+                name="Commit history",
+                status=CheckStatus.FAIL,
+                message="Current branch has no commits to check. "
+                "Create a commit before checking readiness.",
+            ),
+        ]
+
     return [
-        check_git_repository(),
+        repository,
         check_current_branch(),
         check_working_tree(),
         check_upstream_branch(),
