@@ -1,10 +1,11 @@
 import argparse
+import sys
 
-from checks import run_checks
+from checks import CheckStatus, run_checks
 from output import display_results
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="Check whether your Git branch is ready before pushing or opening a PR."
     )
@@ -20,6 +21,8 @@ def main():
     results = run_checks(args.target)
     display_results(results, args.target)
 
+    return int(any(result.status == CheckStatus.FAIL for result in results))
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
