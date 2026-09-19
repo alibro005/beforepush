@@ -7,6 +7,7 @@ def run_git_command(*args: str) -> str:
         ["git", *args],
         capture_output=True,
         text=True,
+        check=False,
     )
 
     if result.returncode != 0:
@@ -21,6 +22,7 @@ def is_git_repository() -> bool:
         ["git", "rev-parse", "--is-inside-work-tree"],
         capture_output=True,
         text=True,
+        check=False,
     )
 
     return result.returncode == 0 and result.stdout.strip() == "true"
@@ -68,5 +70,6 @@ def branch_exists(name: str) -> bool:
         ["git", "rev-parse", "--verify", "--quiet", f"{name}^{{commit}}"],
         capture_output=True,
         text=True,
+        check=False,
     )
     return result.returncode == 0

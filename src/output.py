@@ -1,9 +1,10 @@
 import time
 
-from checks import CheckResult, CheckStatus
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+
+from checks import CheckResult, CheckStatus
 
 console = Console()
 
@@ -49,7 +50,7 @@ def print_check(result: CheckResult, animate: bool = True) -> None:
         ):
             time.sleep(0.25)
 
-    console.print(f"  [{style}]{symbol}[/{style}]  " f"[bold]{result.name}[/bold]")
+    console.print(f"  [{style}]{symbol}[/{style}]  [bold]{result.name}[/bold]")
     console.print(f"     [dim]{result.message}[/dim]")
     console.print()
 

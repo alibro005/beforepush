@@ -1,6 +1,5 @@
 import argparse
 import sys
-
 from importlib.metadata import version
 
 from checks import CheckStatus, run_checks

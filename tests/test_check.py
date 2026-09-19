@@ -1,5 +1,4 @@
 import git
-
 from checks import (
     CheckStatus,
     check_current_branch,
