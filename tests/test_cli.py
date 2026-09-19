@@ -1,3 +1,6 @@
+import pytest
+from importlib.metadata import version
+
 import cli
 from checks import CheckResult, CheckStatus
 
@@ -93,3 +96,16 @@ def test_cli_returns_nonzero_when_check_fails(monkeypatch):
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 1
+
+
+def test_cli_version(capsys, monkeypatch):
+    monkeypatch.setattr(
+        "sys.argv",
+        ["beforepush", "--version"],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main()
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out.strip() == (f"beforepush {version('before-push')}")

@@ -1,6 +1,8 @@
 import argparse
 import sys
 
+from importlib.metadata import version
+
 from checks import CheckStatus, run_checks
 from output import display_results
 
@@ -14,6 +16,12 @@ def main() -> int:
         "--target",
         default="main",
         help="Target branch to compare against (default: main)",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"beforepush {version('before-push')}",
     )
 
     args = parser.parse_args()
