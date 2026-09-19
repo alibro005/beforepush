@@ -1,0 +1,10 @@
+
+/* Dark mode */
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+  background-color: #1d1d1d99;
+}
+
+/* Light mode */
+[data-md-color-scheme="default"] .md-typeset pre > code {
+  background-color: #f1f1f1;
+}

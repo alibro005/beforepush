@@ -6,7 +6,7 @@
 [![Tests](https://github.com/alibro005/beforepush/actions/workflows/test.yml/badge.svg)](https://github.com/alibro005/beforepush/actions/workflows/test.yml)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/alibro005/beforepush/main/assets/beforepush.svg" alt="BeforePush logo" width="160">
+  <img src="https://raw.githubusercontent.com/alibro005/beforepush/main/docs/assets/beforepush.svg" alt="BeforePush logo" width="160">
 </p>
 
 A lightweight CLI that checks whether your Git branch is ready before pushing or opening a pull request.
@@ -37,18 +37,17 @@ Run BeforePush inside a Git repository:
 beforepush
 ```
 
-By default, BeforePush checks your current branch against `main`.
-
-You can specify a different target branch with `--target`:
+To specify a different target branch:
 
 ```bash
 beforepush --target develop
 ```
 
+For detailed installation, usage, and Git pre-push hook instructions, see the [documentation](https://alibro005.github.io/beforepush/).
 
 ## Demo
 
-![beforepush](https://raw.githubusercontent.com/alibro005/beforepush/main/assets/demo.gif)
+![beforepush](https://raw.githubusercontent.com/alibro005/beforepush/main/docs/assets/demo.gif)
 
 ## Contributing
 

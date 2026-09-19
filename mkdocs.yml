@@ -1,0 +1,39 @@
+site_name: BeforePush
+site_description: A CLI that checks your Git branch before pushing or opening a pull request.
+site_url: https://alibro005.github.io/beforepush/
+
+repo_name: alibro005/beforepush
+repo_url: https://github.com/alibro005/beforepush
+
+theme:
+  name: material
+  logo: assets/beforepush.svg
+  favicon: assets/beforepush.svg
+
+  features:
+    - content.code.copy
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - attr_list
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Pre-push Hook: pre-push-hook.md
