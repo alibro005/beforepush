@@ -19,6 +19,7 @@ A lightweight CLI that checks whether your Git branch is ready before pushing or
 * Check upstream branch configuration
 * Check if the current branch is behind a target branch
 * Support custom target branches
+* Warn about newly staged files larger than 5 MB (configurable)
 * Clean terminal output with Rich
 
 ## Installation
@@ -42,6 +43,19 @@ To specify a different target branch:
 ```bash
 beforepush --target develop
 ```
+
+Set a different maximum size for newly staged files with `--max-file-size`.
+Values accept bytes or binary `KB`/`MB` units; the default is `5MB`:
+
+```bash
+beforepush --max-file-size 10MB
+beforepush --max-file-size 500KB
+beforepush --max-file-size 5242880
+```
+
+This warns only for newly added files in the Git index. Existing tracked files,
+including modified ones, are not flagged solely for being large. Warnings do not
+block the command or produce a non-zero exit code.
 
 For detailed installation, usage, and Git pre-push hook instructions, see the [documentation](https://alibro005.github.io/beforepush/).
 

@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 
@@ -36,6 +37,33 @@ def get_current_branch() -> str:
 def get_status() -> str:
     """Get the repository status in porcelain format."""
     return run_git_command("status", "--porcelain")
+
+
+def get_staged_added_files() -> list[tuple[str, int]]:
+    """Return paths and blob sizes for files newly added to the Git index."""
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--diff-filter=A", "--name-only", "-z"],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.decode(errors="replace").strip())
+
+    paths = os.fsdecode(result.stdout)
+    files = []
+    for path in paths.split("\0"):
+        if not path:
+            continue
+        size_result = subprocess.run(
+            ["git", "cat-file", "-s", f":0:{path}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if size_result.returncode != 0:
+            raise RuntimeError(size_result.stderr.strip())
+        files.append((path, int(size_result.stdout.strip())))
+    return files
 
 
 def has_changes() -> bool:
