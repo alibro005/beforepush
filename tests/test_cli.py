@@ -1,8 +1,10 @@
 import subprocess
+from importlib.metadata import version
 
 import pytest
 
 import cli
+from checks import CheckResult, CheckStatus
 
 
 def test_cli_uses_main_by_default(monkeypatch):
@@ -24,11 +26,12 @@ def test_cli_uses_main_by_default(monkeypatch):
         ["beforepush"],
     )
 
-    cli.main()
+    exit_code = cli.main()
 
     assert captured["target"] == "main"
     assert captured["display_target"] == "main"
     assert captured["results"] == []
+    assert exit_code == 0
 
 
 def test_cli_accepts_custom_target(monkeypatch):
@@ -65,7 +68,7 @@ def test_cli_without_commits(tmp_path, monkeypatch, capsys, branch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
-    cli.main()
+    assert cli.main() == 1
 
     output = capsys.readouterr().out
     assert "Commit history" in output
@@ -95,10 +98,65 @@ def test_cli_with_initial_commit(tmp_path, monkeypatch, capsys):
     )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
-    cli.main()
+    assert cli.main() == 0
 
     output = capsys.readouterr().out
     assert "no commits" not in output
     assert "Working tree is clean." in output
     assert "No upstream branch configured." in output
     assert "Currently on target branch 'main'." in output
+
+
+def test_cli_returns_zero_when_checks_pass(monkeypatch):
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target: [
+            CheckResult("Example", CheckStatus.PASS, "Passed."),
+        ],
+    )
+    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr("sys.argv", ["beforepush"])
+
+    assert cli.main() == 0
+
+
+def test_cli_returns_zero_when_checks_only_warn(monkeypatch):
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target: [
+            CheckResult("Example", CheckStatus.WARNING, "Warning."),
+        ],
+    )
+    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr("sys.argv", ["beforepush"])
+
+    assert cli.main() == 0
+
+
+def test_cli_returns_nonzero_when_check_fails(monkeypatch):
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target: [
+            CheckResult("Example", CheckStatus.FAIL, "Failed."),
+        ],
+    )
+    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr("sys.argv", ["beforepush"])
+
+    assert cli.main() == 1
+
+
+def test_cli_version(capsys, monkeypatch):
+    monkeypatch.setattr(
+        "sys.argv",
+        ["beforepush", "--version"],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main()
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out.strip() == (f"beforepush {version('before-push')}")
