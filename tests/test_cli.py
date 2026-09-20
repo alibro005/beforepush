@@ -166,3 +166,49 @@ def test_cli_version(capsys, monkeypatch):
 
     assert exc_info.value.code == 0
     assert capsys.readouterr().out.strip() == (f"beforepush {version('before-push')}")
+
+
+def test_cli_install_hook(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli,
+        "install_pre_push_hook",
+        lambda: "BeforePush pre-push hook installed.",
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["beforepush", "install-hook"],
+    )
+
+    assert cli.main() == 0
+    assert "installed" in capsys.readouterr().out.lower()
+
+
+def test_cli_uninstall_hook(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli,
+        "uninstall_pre_push_hook",
+        lambda: "BeforePush pre-push hook removed.",
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["beforepush", "uninstall-hook"],
+    )
+
+    assert cli.main() == 0
+    assert "removed" in capsys.readouterr().out.lower()
+
+
+def test_cli_install_hook_error(monkeypatch, capsys):
+    def fail_install():
+        raise RuntimeError("Not inside a Git repository.")
+
+    monkeypatch.setattr(cli, "install_pre_push_hook", fail_install)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["beforepush", "install-hook"],
+    )
+
+    assert cli.main() == 1
+
+    error = capsys.readouterr().err
+    assert "Not inside a Git repository." in error
