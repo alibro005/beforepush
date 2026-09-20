@@ -9,7 +9,9 @@ def parse_file_size(value: str) -> int:
     """Parse a byte count or a size with B, KB, or MB units into bytes."""
     match = _SIZE_PATTERN.fullmatch(value.strip())
     if not match:
-        raise ValueError("size must be a positive number optionally followed by B, KB, or MB")
+        raise ValueError(
+            "size must be a positive number optionally followed by B, KB, or MB"
+        )
 
     amount = Decimal(match.group(1))
     if amount <= 0:

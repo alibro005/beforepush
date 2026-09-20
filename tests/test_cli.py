@@ -67,7 +67,9 @@ def test_cli_accepts_max_file_size(monkeypatch):
     monkeypatch.setattr(
         cli,
         "run_checks",
-        lambda target, max_file_size: captured.update(max_file_size=max_file_size) or [],
+        lambda target, max_file_size: (
+            captured.update(max_file_size=max_file_size) or []
+        ),
     )
     monkeypatch.setattr(cli, "display_results", lambda results, target: None)
     monkeypatch.setattr("sys.argv", ["beforepush", "--max-file-size", "10MB"])

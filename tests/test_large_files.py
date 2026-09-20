@@ -63,3 +63,15 @@ def test_staged_blob_size_is_used_if_working_file_changes(tmp_path, monkeypatch)
 
     assert result.status == CheckStatus.WARNING
     assert "staged.bin (2.0 KB)" in result.message
+
+
+def test_git_inspection_error_is_included_in_result(monkeypatch):
+    def fail_inspection():
+        raise RuntimeError("fatal: index file is corrupt")
+
+    monkeypatch.setattr(git, "get_staged_added_files", fail_inspection)
+
+    result = check_large_staged_files(1024)
+
+    assert result.status == CheckStatus.FAIL
+    assert "fatal: index file is corrupt" in result.message

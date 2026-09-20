@@ -93,11 +93,11 @@ def check_large_staged_files(max_file_size: int) -> CheckResult:
             for path, size in git.get_staged_added_files()
             if size > max_file_size
         ]
-    except RuntimeError:
+    except RuntimeError as exc:
         return CheckResult(
             name="Large staged files",
             status=CheckStatus.FAIL,
-            message="Could not inspect newly staged files.",
+            message=f"Could not inspect newly staged files: {exc}",
         )
 
     if not large_files:
