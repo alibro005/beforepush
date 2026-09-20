@@ -18,6 +18,7 @@ A lightweight CLI that checks whether your Git branch is ready before pushing or
 * Detect uncommitted or untracked changes
 * Check upstream branch configuration
 * Check if the current branch is behind a target branch
+* Run checks automatically before git push with a pre-push hook
 * Support custom target branches
 * Clean terminal output with Rich
 
