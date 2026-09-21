@@ -45,7 +45,6 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    results = run_checks(args.target, args.max_file_size)
     if args.command == "install-hook":
         try:
             print(install_pre_push_hook())
@@ -64,7 +63,7 @@ def main() -> int:
 
         return 0
 
-    results = run_checks(args.target)
+    results = run_checks(args.target, args.max_file_size)
     display_results(results, args.target)
 
     return int(any(result.status == CheckStatus.FAIL for result in results))
