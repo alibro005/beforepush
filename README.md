@@ -20,6 +20,7 @@ A lightweight CLI that checks whether your Git branch is ready before pushing or
 * Check if the current branch is behind a target branch
 * Run checks automatically before git push with a pre-push hook
 * Support custom target branches
+* Warn about newly staged files larger than 5 MB (configurable)
 * Clean terminal output with Rich
 
 ## Installation
@@ -44,7 +45,7 @@ To specify a different target branch:
 beforepush --target develop
 ```
 
-For detailed installation, usage, and Git pre-push hook instructions, see the [documentation](https://alibro005.github.io/beforepush/).
+For detailed usage, including the `--max-file-size` option and Git pre-push hook instructions, see the [documentation](https://alibro005.github.io/beforepush/).
 
 ## Demo
 

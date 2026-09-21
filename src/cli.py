@@ -5,6 +5,7 @@ from importlib.metadata import version
 from checks import CheckStatus, run_checks
 from git import install_pre_push_hook, uninstall_pre_push_hook
 from output import display_results
+from sizes import format_file_size, parse_file_size
 
 
 def main() -> int:
@@ -23,6 +24,17 @@ def main() -> int:
         "--target",
         default="main",
         help="Target branch to compare against (default: main)",
+    )
+
+    parser.add_argument(
+        "--max-file-size",
+        type=parse_file_size,
+        default=5 * 1024 * 1024,
+        metavar="SIZE",
+        help=(
+            "Warn about newly staged files larger than SIZE "
+            f"(default: {format_file_size(5 * 1024 * 1024)}; supports bytes, KB, or MB)"
+        ),
     )
 
     parser.add_argument(
@@ -51,7 +63,7 @@ def main() -> int:
 
         return 0
 
-    results = run_checks(args.target)
+    results = run_checks(args.target, args.max_file_size)
     display_results(results, args.target)
 
     return int(any(result.status == CheckStatus.FAIL for result in results))
