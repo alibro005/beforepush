@@ -125,6 +125,60 @@ def branch_exists(name: str) -> bool:
     return result.returncode == 0
 
 
+def get_diagnostics(target: str) -> list[tuple[str, str]]:
+    """Collect read-only Git context for verbose output."""
+    diagnostics = [("Working directory", str(Path.cwd().resolve()))]
+    commands = [
+        ("Repository", ("rev-parse", "--show-toplevel")),
+        ("HEAD", ("rev-parse", "--short", "HEAD")),
+        ("Branch", ("branch", "--show-current")),
+        ("Working tree", ("status", "--short")),
+        (
+            "Upstream",
+            (
+                "rev-parse",
+                "--abbrev-ref",
+                "--symbolic-full-name",
+                "@{u}",
+            ),
+        ),
+        (
+            "Target comparison",
+            ("rev-list", "--left-right", "--count", f"HEAD...{target}"),
+        ),
+        ("Remotes", ("remote",)),
+    ]
+
+    for label, args in commands:
+        try:
+            result = subprocess.run(
+                ["git", *args],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as error:
+            value = f"Unavailable: {error}"
+        else:
+            if result.returncode != 0:
+                value = "(none)" if label == "Upstream" else "Unavailable."
+            else:
+                value = result.stdout.strip()
+                if not value:
+                    value = "(detached HEAD)" if label == "Branch" else "(none)"
+                elif label == "Working tree":
+                    value = ", ".join(line.strip() for line in value.splitlines())
+                elif label == "Target comparison":
+                    ahead, behind = value.split()
+                    value = f"{ahead} ahead, {behind} behind"
+                elif label == "Remotes":
+                    value = ", ".join(value.splitlines())
+
+        diagnostics.append((label, value))
+
+    return diagnostics
+
+
 def is_beforepush_hook(hook_path: Path) -> bool:
     """Return whether the hook was installed by BeforePush."""
     if not hook_path.is_file():

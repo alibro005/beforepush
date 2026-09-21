@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -152,6 +153,46 @@ def test_branch_exists_false(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     assert git.branch_exists("develop") is False
+
+
+def test_get_diagnostics_includes_repository_context(tmp_path, monkeypatch):
+    subprocess.run(
+        ["git", "init", "--initial-branch", "main", str(tmp_path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Test User",
+            "-c",
+            "user.email=test@example.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "Initial commit",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    (tmp_path / "untracked file.txt").write_text("pending", encoding="utf-8")
+
+    diagnostics = dict(git.get_diagnostics("main"))
+
+    assert Path(diagnostics["Working directory"]) == tmp_path.resolve()
+    assert Path(diagnostics["Repository"]) == tmp_path.resolve()
+    assert diagnostics["HEAD"]
+    assert diagnostics["Branch"] == "main"
+    assert "untracked file.txt" in diagnostics["Working tree"]
+    assert diagnostics["Upstream"] == "(none)"
+    assert diagnostics["Target comparison"] == "0 ahead, 0 behind"
+    assert diagnostics["Remotes"] == "(none)"
 
 
 def test_get_git_dir(tmp_path, monkeypatch):
@@ -373,3 +414,45 @@ def test_installed_hook_propagates_beforepush_exit_code(tmp_path, monkeypatch):
     )
 
     assert result.returncode == 7
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="sh is required")
+def test_installed_hook_preserves_verbose_environment(tmp_path):
+    subprocess.run(
+        ["git", "init"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    hook_dir = tmp_path / ".git" / "hooks"
+    hook_dir.mkdir(exist_ok=True)
+    hook_path = hook_dir / "pre-push"
+    hook_path.write_text(git.BEFOREPUSH_HOOK_CONTENT, encoding="utf-8")
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    marker = tmp_path / "verbose-env.txt"
+    fake_beforepush = fake_bin / "beforepush"
+    fake_beforepush.write_text(
+        '#!/bin/sh\nprintf "%s" "$BEFOREPUSH_VERBOSE" > "$BEFOREPUSH_MARKER"\n',
+        encoding="utf-8",
+    )
+    fake_beforepush.chmod(fake_beforepush.stat().st_mode | 0o111)
+
+    result = subprocess.run(
+        ["sh", str(hook_path)],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "BEFOREPUSH_VERBOSE": "1",
+            "BEFOREPUSH_MARKER": str(marker),
+            "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
+        },
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert marker.read_text(encoding="utf-8") == "1"

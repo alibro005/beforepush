@@ -15,9 +15,10 @@ def test_cli_uses_main_by_default(monkeypatch):
         captured["max_file_size"] = max_file_size
         return []
 
-    def fake_display_results(results, target):
+    def fake_display_results(results, target, *, verbose=False):
         captured["results"] = results
         captured["display_target"] = target
+        captured["verbose"] = verbose
 
     monkeypatch.setattr(cli, "run_checks", fake_run_checks)
     monkeypatch.setattr(cli, "display_results", fake_display_results)
@@ -33,6 +34,7 @@ def test_cli_uses_main_by_default(monkeypatch):
     assert captured["max_file_size"] == 5 * 1024 * 1024
     assert captured["display_target"] == "main"
     assert captured["results"] == []
+    assert captured["verbose"] is False
     assert exit_code == 0
 
 
@@ -44,7 +46,7 @@ def test_cli_accepts_custom_target(monkeypatch):
         captured["max_file_size"] = max_file_size
         return []
 
-    def fake_display_results(results, target):
+    def fake_display_results(results, target, *, verbose=False):
         captured["display_target"] = target
 
     monkeypatch.setattr(cli, "run_checks", fake_run_checks)
@@ -62,6 +64,44 @@ def test_cli_accepts_custom_target(monkeypatch):
     assert captured["display_target"] == "develop"
 
 
+@pytest.mark.parametrize("option", ["--verbose", "-v"])
+def test_cli_verbose_option(monkeypatch, option):
+    captured = {}
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target, max_file_size: [],
+    )
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: captured.update(verbose=verbose),
+    )
+    monkeypatch.setattr("sys.argv", ["beforepush", option])
+
+    assert cli.main() == 0
+    assert captured["verbose"] is True
+
+
+def test_cli_verbose_environment_for_pre_push_hook(monkeypatch):
+    captured = {}
+    monkeypatch.setenv("BEFOREPUSH_VERBOSE", "1")
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target, max_file_size: [],
+    )
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: captured.update(verbose=verbose),
+    )
+    monkeypatch.setattr("sys.argv", ["beforepush"])
+
+    assert cli.main() == 0
+    assert captured["verbose"] is True
+
+
 def test_cli_accepts_max_file_size(monkeypatch):
     captured = {}
     monkeypatch.setattr(
@@ -71,7 +111,13 @@ def test_cli_accepts_max_file_size(monkeypatch):
             captured.update(max_file_size=max_file_size) or []
         ),
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
+
     monkeypatch.setattr("sys.argv", ["beforepush", "--max-file-size", "10MB"])
 
     assert cli.main() == 0
@@ -151,7 +197,11 @@ def test_cli_returns_zero_when_checks_pass(monkeypatch):
             CheckResult("Example", CheckStatus.PASS, "Passed."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 0
@@ -165,7 +215,11 @@ def test_cli_returns_zero_when_checks_only_warn(monkeypatch):
             CheckResult("Example", CheckStatus.WARNING, "Warning."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 0
@@ -179,7 +233,11 @@ def test_cli_returns_nonzero_when_check_fails(monkeypatch):
             CheckResult("Example", CheckStatus.FAIL, "Failed."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 1

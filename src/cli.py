@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from importlib.metadata import version
 
@@ -24,6 +25,15 @@ def main() -> int:
         "--target",
         default="main",
         help="Target branch to compare against (default: main)",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=os.environ.get("BEFOREPUSH_VERBOSE", "").lower()
+        in {"1", "true", "yes", "on"},
+        help="Show Git repository and check diagnostics.",
     )
 
     parser.add_argument(
@@ -64,7 +74,7 @@ def main() -> int:
         return 0
 
     results = run_checks(args.target, args.max_file_size)
-    display_results(results, args.target)
+    display_results(results, args.target, verbose=args.verbose)
 
     return int(any(result.status == CheckStatus.FAIL for result in results))
 

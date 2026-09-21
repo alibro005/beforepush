@@ -5,6 +5,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from checks import CheckResult, CheckStatus
+from git import get_diagnostics
 
 console = Console()
 
@@ -126,9 +127,27 @@ def print_results(
     print_summary(results)
 
 
+def print_diagnostics(target: str) -> None:
+    """Print detailed Git diagnostics."""
+    diagnostics = get_diagnostics(target)
+
+    console.print("  [bold cyan]Diagnostics[/bold cyan]")
+    console.print("  [dim]" + "─" * 50 + "[/dim]")
+
+    for label, value in diagnostics:
+        line = Text()
+        line.append(f"  {label:<24}", style="bold")
+        line.append(f"{value}")
+        console.print(line)
+
+    console.print()
+
+
 def display_results(
     results: list[CheckResult],
     target: str,
+    *,
+    verbose: bool = False,
 ) -> None:
     """Display the complete check report."""
     print_header(target)
@@ -141,3 +160,6 @@ def display_results(
             time.sleep(0.5)
 
     print_results(results)
+
+    if verbose:
+        print_diagnostics(target)

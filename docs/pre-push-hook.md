@@ -20,6 +20,14 @@ The BeforePush hook runs:
 beforepush
 ```
 
+To include diagnostic details when the hook runs, set `BEFOREPUSH_VERBOSE=1` for the push:
+
+```bash
+BEFOREPUSH_VERBOSE=1 git push
+```
+
+The hook inherits this environment variable and runs BeforePush in verbose mode. In PowerShell, set `$env:BEFOREPUSH_VERBOSE = "1"` before running `git push`.
+
 If BeforePush exits with a non-zero status because a check fails, the hook returns that status and Git stops the push.
 
 If all checks pass, the push continues normally.
