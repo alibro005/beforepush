@@ -4,6 +4,7 @@ from importlib.metadata import version
 import pytest
 
 import cli
+import output
 from checks import CheckResult, CheckStatus
 
 
@@ -14,9 +15,10 @@ def test_cli_uses_main_by_default(monkeypatch):
         captured["target"] = target
         return []
 
-    def fake_display_results(results, target):
+    def fake_display_results(results, target, *, verbose=False):
         captured["results"] = results
         captured["display_target"] = target
+        captured["verbose"] = verbose
 
     monkeypatch.setattr(cli, "run_checks", fake_run_checks)
     monkeypatch.setattr(cli, "display_results", fake_display_results)
@@ -31,6 +33,7 @@ def test_cli_uses_main_by_default(monkeypatch):
     assert captured["target"] == "main"
     assert captured["display_target"] == "main"
     assert captured["results"] == []
+    assert captured["verbose"] is False
     assert exit_code == 0
 
 
@@ -41,7 +44,7 @@ def test_cli_accepts_custom_target(monkeypatch):
         captured["target"] = target
         return []
 
-    def fake_display_results(results, target):
+    def fake_display_results(results, target, *, verbose=False):
         captured["display_target"] = target
 
     monkeypatch.setattr(cli, "run_checks", fake_run_checks)
@@ -56,6 +59,54 @@ def test_cli_accepts_custom_target(monkeypatch):
 
     assert captured["target"] == "develop"
     assert captured["display_target"] == "develop"
+
+
+@pytest.mark.parametrize("option", ["--verbose", "-v"])
+def test_cli_verbose_option(monkeypatch, option):
+    captured = {}
+    monkeypatch.setattr(cli, "run_checks", lambda target: [])
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: captured.update(verbose=verbose),
+    )
+    monkeypatch.setattr("sys.argv", ["beforepush", option])
+
+    assert cli.main() == 0
+    assert captured["verbose"] is True
+
+
+def test_cli_verbose_environment_for_pre_push_hook(monkeypatch):
+    captured = {}
+    monkeypatch.setenv("BEFOREPUSH_VERBOSE", "1")
+    monkeypatch.setattr(cli, "run_checks", lambda target: [])
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: captured.update(verbose=verbose),
+    )
+    monkeypatch.setattr("sys.argv", ["beforepush"])
+
+    assert cli.main() == 0
+    assert captured["verbose"] is True
+
+
+def test_display_results_only_shows_diagnostics_when_verbose(monkeypatch, capsys):
+    monkeypatch.setattr(
+        output,
+        "get_diagnostics",
+        lambda target: [("Repository", "/tmp/example")],
+    )
+
+    output.display_results([], "main")
+    normal_output = capsys.readouterr().out
+    assert "Diagnostics" not in normal_output
+    assert "/tmp/example" not in normal_output
+
+    output.display_results([], "main", verbose=True)
+    verbose_output = capsys.readouterr().out
+    assert "Diagnostics" in verbose_output
+    assert "/tmp/example" in verbose_output
 
 
 @pytest.mark.parametrize("branch", ["main", "feature/test"])
@@ -121,7 +172,11 @@ def test_cli_returns_zero_when_checks_pass(monkeypatch):
             CheckResult("Example", CheckStatus.PASS, "Passed."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 0
@@ -135,7 +190,11 @@ def test_cli_returns_zero_when_checks_only_warn(monkeypatch):
             CheckResult("Example", CheckStatus.WARNING, "Warning."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 0
@@ -149,7 +208,11 @@ def test_cli_returns_nonzero_when_check_fails(monkeypatch):
             CheckResult("Example", CheckStatus.FAIL, "Failed."),
         ],
     )
-    monkeypatch.setattr(cli, "display_results", lambda results, target: None)
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
     monkeypatch.setattr("sys.argv", ["beforepush"])
 
     assert cli.main() == 1

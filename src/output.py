@@ -5,6 +5,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from checks import CheckResult, CheckStatus
+from git import get_diagnostics
 
 console = Console()
 
@@ -129,6 +130,8 @@ def print_results(
 def display_results(
     results: list[CheckResult],
     target: str,
+    *,
+    verbose: bool = False,
 ) -> None:
     """Display the complete check report."""
     print_header(target)
@@ -141,3 +144,10 @@ def display_results(
             time.sleep(0.5)
 
     print_results(results)
+
+    if verbose:
+        console.print("  [bold]Diagnostics[/bold]")
+        console.print()
+        for label, value in get_diagnostics(target):
+            console.print(f"    {label}: {value}", markup=False)
+        console.print()

@@ -46,6 +46,24 @@ To check the installed version:
 beforepush --version
 ```
 
+## Verbose Diagnostics
+
+Use `--verbose` or `-v` when a check fails and you need more context:
+
+```bash
+beforepush --verbose
+```
+
+Verbose output includes the working directory, repository root, current commit and branch, detailed working-tree state, upstream branch, target comparison, and configured remote names. It also shows Git's error output when a diagnostic command cannot run. Remote URLs are not printed.
+
+The normal output and check behavior remain unchanged when verbose mode is off. To enable verbose output for an installed pre-push hook, set `BEFOREPUSH_VERBOSE=1` for the `git push` command:
+
+```bash
+BEFOREPUSH_VERBOSE=1 git push
+```
+
+In PowerShell, set `$env:BEFOREPUSH_VERBOSE = "1"` before running `git push`.
+
 ## Understanding the Output
 
 BeforePush reports the result of each check using three statuses:
