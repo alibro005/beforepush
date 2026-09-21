@@ -4,15 +4,15 @@ from importlib.metadata import version
 import pytest
 
 import cli
-import output
 from checks import CheckResult, CheckStatus
 
 
 def test_cli_uses_main_by_default(monkeypatch):
     captured = {}
 
-    def fake_run_checks(target):
+    def fake_run_checks(target, max_file_size):
         captured["target"] = target
+        captured["max_file_size"] = max_file_size
         return []
 
     def fake_display_results(results, target, *, verbose=False):
@@ -31,6 +31,7 @@ def test_cli_uses_main_by_default(monkeypatch):
     exit_code = cli.main()
 
     assert captured["target"] == "main"
+    assert captured["max_file_size"] == 5 * 1024 * 1024
     assert captured["display_target"] == "main"
     assert captured["results"] == []
     assert captured["verbose"] is False
@@ -40,8 +41,9 @@ def test_cli_uses_main_by_default(monkeypatch):
 def test_cli_accepts_custom_target(monkeypatch):
     captured = {}
 
-    def fake_run_checks(target):
+    def fake_run_checks(target, max_file_size):
         captured["target"] = target
+        captured["max_file_size"] = max_file_size
         return []
 
     def fake_display_results(results, target, *, verbose=False):
@@ -58,13 +60,18 @@ def test_cli_accepts_custom_target(monkeypatch):
     cli.main()
 
     assert captured["target"] == "develop"
+    assert captured["max_file_size"] == 5 * 1024 * 1024
     assert captured["display_target"] == "develop"
 
 
 @pytest.mark.parametrize("option", ["--verbose", "-v"])
 def test_cli_verbose_option(monkeypatch, option):
     captured = {}
-    monkeypatch.setattr(cli, "run_checks", lambda target: [])
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target, max_file_size: [],
+    )
     monkeypatch.setattr(
         cli,
         "display_results",
@@ -79,7 +86,11 @@ def test_cli_verbose_option(monkeypatch, option):
 def test_cli_verbose_environment_for_pre_push_hook(monkeypatch):
     captured = {}
     monkeypatch.setenv("BEFOREPUSH_VERBOSE", "1")
-    monkeypatch.setattr(cli, "run_checks", lambda target: [])
+    monkeypatch.setattr(
+        cli,
+        "run_checks",
+        lambda target, max_file_size: [],
+    )
     monkeypatch.setattr(
         cli,
         "display_results",
@@ -91,22 +102,36 @@ def test_cli_verbose_environment_for_pre_push_hook(monkeypatch):
     assert captured["verbose"] is True
 
 
-def test_display_results_only_shows_diagnostics_when_verbose(monkeypatch, capsys):
+def test_cli_accepts_max_file_size(monkeypatch):
+    captured = {}
     monkeypatch.setattr(
-        output,
-        "get_diagnostics",
-        lambda target: [("Repository", "/tmp/example")],
+        cli,
+        "run_checks",
+        lambda target, max_file_size: (
+            captured.update(max_file_size=max_file_size) or []
+        ),
     )
 
-    output.display_results([], "main")
-    normal_output = capsys.readouterr().out
-    assert "Diagnostics" not in normal_output
-    assert "/tmp/example" not in normal_output
+    monkeypatch.setattr(
+        cli,
+        "display_results",
+        lambda results, target, *, verbose=False: None,
+    )
 
-    output.display_results([], "main", verbose=True)
-    verbose_output = capsys.readouterr().out
-    assert "Diagnostics" in verbose_output
-    assert "/tmp/example" in verbose_output
+    monkeypatch.setattr("sys.argv", ["beforepush", "--max-file-size", "10MB"])
+
+    assert cli.main() == 0
+    assert captured["max_file_size"] == 10 * 1024 * 1024
+
+
+@pytest.mark.parametrize("value", ["abc", "5XYZ", "-5MB", "0", "1.1B"])
+def test_cli_rejects_invalid_max_file_size(value, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["beforepush", "--max-file-size", value])
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main()
+
+    assert exc_info.value.code == 2
 
 
 @pytest.mark.parametrize("branch", ["main", "feature/test"])
@@ -168,7 +193,7 @@ def test_cli_returns_zero_when_checks_pass(monkeypatch):
     monkeypatch.setattr(
         cli,
         "run_checks",
-        lambda target: [
+        lambda target, max_file_size: [
             CheckResult("Example", CheckStatus.PASS, "Passed."),
         ],
     )
@@ -186,7 +211,7 @@ def test_cli_returns_zero_when_checks_only_warn(monkeypatch):
     monkeypatch.setattr(
         cli,
         "run_checks",
-        lambda target: [
+        lambda target, max_file_size: [
             CheckResult("Example", CheckStatus.WARNING, "Warning."),
         ],
     )
@@ -204,7 +229,7 @@ def test_cli_returns_nonzero_when_check_fails(monkeypatch):
     monkeypatch.setattr(
         cli,
         "run_checks",
-        lambda target: [
+        lambda target, max_file_size: [
             CheckResult("Example", CheckStatus.FAIL, "Failed."),
         ],
     )

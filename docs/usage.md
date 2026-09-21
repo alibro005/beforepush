@@ -19,6 +19,7 @@ BeforePush checks:
 * Whether you have uncommitted or untracked changes
 * Whether an upstream branch is configured
 * Whether your branch is behind the target branch
+* Whether newly staged files exceed the default 5 MB size limit
 
 ## Custom Target Branch
 
@@ -31,6 +32,21 @@ beforepush --target develop
 ```
 
 The target branch must already exist in the repository.
+
+## Maximum Staged File Size
+
+BeforePush warns when a newly added file in the Git index exceeds 5 MB. Existing
+tracked files are ignored by this check, even when modified. Set a different limit
+with `--max-file-size`; units are binary (1 KB = 1024 bytes, 1 MB = 1024 KB),
+and a bare number means bytes:
+
+```bash
+beforepush --max-file-size 10MB
+beforepush --max-file-size 500KB
+beforepush --max-file-size 5242880
+```
+
+The warning lists every oversized staged file and does not block the command.
 
 ## Command-Line Options
 

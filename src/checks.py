@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import git
+from sizes import format_file_size
 
 
 class CheckStatus(Enum):
@@ -84,6 +85,40 @@ def check_working_tree() -> CheckResult:
     )
 
 
+def check_large_staged_files(max_file_size: int) -> CheckResult:
+    """Warn when a newly staged file exceeds the configured size limit."""
+    try:
+        large_files = [
+            (path, size)
+            for path, size in git.get_staged_added_files()
+            if size > max_file_size
+        ]
+    except RuntimeError as exc:
+        return CheckResult(
+            name="Large staged files",
+            status=CheckStatus.FAIL,
+            message=f"Could not inspect newly staged files: {exc}",
+        )
+
+    if not large_files:
+        return CheckResult(
+            name="Large staged files",
+            status=CheckStatus.PASS,
+            message=f"No newly staged files exceed {format_file_size(max_file_size)}.",
+        )
+
+    details = "\n".join(
+        f"- {path} ({format_file_size(size)}) — exceeds "
+        f"{format_file_size(max_file_size)} limit"
+        for path, size in large_files
+    )
+    return CheckResult(
+        name="Large staged files",
+        status=CheckStatus.WARNING,
+        message=details,
+    )
+
+
 def check_upstream_branch() -> CheckResult:
     """Check whether the current branch has an upstream branch."""
     try:
@@ -145,7 +180,10 @@ def check_target_branch(target: str) -> CheckResult:
     )
 
 
-def run_checks(target: str) -> list[CheckResult]:
+def run_checks(
+    target: str,
+    max_file_size: int = 5 * 1024 * 1024,
+) -> list[CheckResult]:
     """Run all repository readiness checks."""
     repository = check_git_repository()
     if repository.status == CheckStatus.PASS and not git.branch_exists("HEAD"):
@@ -163,6 +201,7 @@ def run_checks(target: str) -> list[CheckResult]:
         repository,
         check_current_branch(),
         check_working_tree(),
+        check_large_staged_files(max_file_size),
         check_upstream_branch(),
         check_target_branch(target),
     ]
