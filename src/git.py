@@ -115,7 +115,7 @@ def get_diagnostics(target: str) -> list[tuple[str, str]]:
             ),
         ),
         (
-            "Target comparison (ahead behind)",
+            "Target comparison",
             ("rev-list", "--left-right", "--count", f"HEAD...{target}"),
         ),
         ("Remotes", ("remote",)),
@@ -133,13 +133,16 @@ def get_diagnostics(target: str) -> list[tuple[str, str]]:
             value = f"Unavailable: {error}"
         else:
             if result.returncode != 0:
-                value = result.stderr.strip() or "Unavailable."
+                value = "(none)" if label == "Upstream" else "Unavailable."
             else:
                 value = result.stdout.strip()
                 if not value:
                     value = "(detached HEAD)" if label == "Branch" else "(none)"
                 elif label == "Working tree":
-                    value = "\n".join(f"    {line}" for line in value.splitlines())
+                    value = ", ".join(line.strip() for line in value.splitlines())
+                elif label == "Target comparison":
+                    ahead, behind = value.split()
+                    value = f"{ahead} ahead, {behind} behind"
                 elif label == "Remotes":
                     value = ", ".join(value.splitlines())
 

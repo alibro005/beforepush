@@ -127,6 +127,22 @@ def print_results(
     print_summary(results)
 
 
+def print_diagnostics(target: str) -> None:
+    """Print detailed Git diagnostics."""
+    diagnostics = get_diagnostics(target)
+
+    console.print("  [bold cyan]Diagnostics[/bold cyan]")
+    console.print("  [dim]" + "─" * 50 + "[/dim]")
+
+    for label, value in diagnostics:
+        line = Text()
+        line.append(f"  {label:<24}", style="bold")
+        line.append(f"{value}")
+        console.print(line)
+
+    console.print()
+
+
 def display_results(
     results: list[CheckResult],
     target: str,
@@ -146,8 +162,4 @@ def display_results(
     print_results(results)
 
     if verbose:
-        console.print("  [bold]Diagnostics[/bold]")
-        console.print()
-        for label, value in get_diagnostics(target):
-            console.print(f"    {label}: {value}", markup=False)
-        console.print()
+        print_diagnostics(target)

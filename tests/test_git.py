@@ -190,8 +190,8 @@ def test_get_diagnostics_includes_repository_context(tmp_path, monkeypatch):
     assert diagnostics["HEAD"]
     assert diagnostics["Branch"] == "main"
     assert "untracked file.txt" in diagnostics["Working tree"]
-    assert "upstream" in diagnostics["Upstream"].lower()
-    assert diagnostics["Target comparison (ahead behind)"] == "0\t0"
+    assert diagnostics["Upstream"] == "(none)"
+    assert diagnostics["Target comparison"] == "0 ahead, 0 behind"
     assert diagnostics["Remotes"] == "(none)"
 
 
