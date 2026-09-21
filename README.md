@@ -18,6 +18,7 @@ A lightweight CLI that checks whether your Git branch is ready before pushing or
 * Detect uncommitted or untracked changes
 * Check upstream branch configuration
 * Check if the current branch is behind a target branch
+* Run checks automatically before git push with a pre-push hook
 * Support custom target branches
 * Warn about newly staged files larger than 5 MB (configurable)
 * Clean terminal output with Rich
@@ -59,7 +60,7 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for developmen
 Thanks to everyone who contributes to BeforePush!  ❤️
 
 <a href="https://github.com/alibro005/beforepush/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=alibro005/beforepush" />
+  <img src="https://contrib.rocks/image?repo=alibro005/beforepush&v=2" />
 </a>
 
 ## Scope
