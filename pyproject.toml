@@ -1,6 +1,6 @@
 [project]
 name = "before-push"
-version = "0.1.4"
+version = "0.1.5"
 description = "A small CLI that checks your current Git branch before you push or open a pull request."
 readme = "README.md"
 requires-python = ">=3.13"
